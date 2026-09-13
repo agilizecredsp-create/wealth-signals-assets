@@ -1,0 +1,44 @@
+name: Render Faceless Short
+on:
+  repository_dispatch:
+    types: [render-faceless-short]
+jobs:
+  render:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Instalar FFmpeg
+        timeout-minutes: 5
+        run: |
+          curl -sL --fail --retry 5 --retry-delay 3 --retry-all-errors -o /tmp/ffmpeg.tar.xz "https://github.com/BtbN/FFmpeg-Builds/releases/download/latest/ffmpeg-master-latest-linux64-gpl.tar.xz"
+          if [ ! -s /tmp/ffmpeg.tar.xz ]; then
+            echo "ERRO: download do ffmpeg falhou ou veio vazio"
+            exit 1
+          fi
+          mkdir -p /tmp/ffmpeg-extract
+          tar -xJf /tmp/ffmpeg.tar.xz -C /tmp/ffmpeg-extract --strip-components=1
+          sudo mv /tmp/ffmpeg-extract/bin/ffmpeg /usr/local/bin/ffmpeg
+          sudo mv /tmp/ffmpeg-extract/bin/ffprobe /usr/local/bin/ffprobe
+          sudo chmod +x /usr/local/bin/ffmpeg /usr/local/bin/ffprobe
+          ffmpeg -version
+      - name: Rodar script de renderização
+        env:
+          AUDIO_URL: ${{ github.event.client_payload.audioUrl }}
+          IMAGE_URLS_JSON: ${{ toJson(github.event.client_payload.imageUrls) }}
+          TITULO: ${{ github.event.client_payload.titulo }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          chmod +x render_faceless.sh
+          ./render_faceless.sh
+      - name: Publicar vídeo como Release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          TAG="video-${{ github.event.client_payload.correlationId }}"
+          gh release create "$TAG" \
+            render_work/video_final.mp4 \
+            render_work/thumbnail.jpg \
+            --title "$TAG" \
+            --notes "Render automático via N8N - ${{ github.event.client_payload.correlationId }}"
