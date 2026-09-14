@@ -24,6 +24,9 @@ FONT="/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf"
 echo "== Instalando Pillow (thumbnail) e faster-whisper (legenda) =="
 pip install pillow faster-whisper --break-system-packages --quiet 2>/dev/null || pip install pillow faster-whisper --quiet
 
+echo "== Aguardando 10s pra dar tempo do ultimo commit do n8n propagar na API do GitHub =="
+sleep 10
+
 # Baixa com retry + validacao real (mesma tecnica provada no Dormindo com Jesus):
 # --fail detecta erro HTTP de verdade; se o CDN do GitHub ainda nao propagou um
 # arquivo recem-commitado, cai pro fallback via api.github.com/.../contents/.
@@ -56,7 +59,7 @@ baixar_com_retry() {
     local api_url
     api_url=$(echo "$url" | sed -E 's#https://raw.githubusercontent.com/([^/]+)/([^/]+)/([^/]+)/(.*)#https://api.github.com/repos/\1/\2/contents/\4?ref=\3#')
     local fallback_tentativa=1
-    local fallback_max=5
+    local fallback_max=10
     while [ "$fallback_tentativa" -le "$fallback_max" ]; do
       echo "  Tentando via api.github.com (sem lag de CDN) - tentativa $fallback_tentativa/$fallback_max..."
       if curl -sL --fail --max-time 30 -H "Authorization: token $GH_TOKEN" -H "Accept: application/vnd.github.raw" -o "$destino" "$api_url" && [ -s "$destino" ]; then
@@ -71,7 +74,7 @@ baixar_com_retry() {
         fi
       fi
       fallback_tentativa=$((fallback_tentativa + 1))
-      sleep 5
+      sleep 6
     done
   fi
   echo "ERRO FATAL: nao foi possivel baixar apos $tentativas tentativas: $url"
