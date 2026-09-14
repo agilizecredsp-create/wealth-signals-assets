@@ -1,11 +1,13 @@
-name: Render Faceless Short
+name: Render Faceless Video
 on:
   repository_dispatch:
     types: [render-faceless-short]
+permissions:
+  contents: write
 jobs:
   render:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 60
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -25,7 +27,7 @@ jobs:
           ffmpeg -version
       - name: Rodar script de renderização
         env:
-          AUDIO_URL: ${{ github.event.client_payload.audioUrl }}
+          AUDIO_URLS_JSON: ${{ toJson(github.event.client_payload.audioUrls) }}
           IMAGE_URLS_JSON: ${{ toJson(github.event.client_payload.imageUrls) }}
           TITULO: ${{ github.event.client_payload.titulo }}
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -39,6 +41,8 @@ jobs:
           TAG="video-${{ github.event.client_payload.correlationId }}"
           gh release create "$TAG" \
             render_work/video_final.mp4 \
+            render_work/short_1.mp4 \
+            render_work/short_2.mp4 \
             render_work/thumbnail.jpg \
             --title "$TAG" \
             --notes "Render automático via N8N - ${{ github.event.client_payload.correlationId }}"
