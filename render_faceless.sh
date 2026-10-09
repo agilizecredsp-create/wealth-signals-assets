@@ -22,7 +22,8 @@ XFADE_DUR=0.5
 FONT="/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf"
 
 echo "== Instalando Pillow (thumbnail) e faster-whisper (legenda) =="
-pip install --upgrade pillow faster-whisper av --break-system-packages --quiet 2>/dev/null || pip install --upgrade pillow faster-whisper av --quiet
+pip install pillow faster-whisper "av==15.1.0" --break-system-packages --quiet 2>/dev/null || pip install pillow faster-whisper "av==15.1.0" --quiet
+python3 -c "import av; print(\"av versao:\", av.__version__)"
 
 echo "== Aguardando 10s pra dar tempo do ultimo commit do n8n propagar na API do GitHub =="
 sleep 10
